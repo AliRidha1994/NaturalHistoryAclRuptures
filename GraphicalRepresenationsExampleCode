@@ -1,0 +1,146 @@
+################ACLQOL#############
+library(tidyverse)
+# Convert the data from wide to long format
+long_dataACLQOL <- ACL_QOL_%>% 
+  pivot_longer(cols = `0`:`60`, names_to = "Month", values_to = "Value") %>%
+  filter(!is.na(Value)) %>%
+  mutate(Month = as.numeric(Month)) %>% 
+  filter(TrialArmN != 9, Month <= 24)  # Corrected filter condition
+
+
+# Plotting the data for the first plot
+plotACLQOLRecon <- ggplot(long_dataACLQOL, aes(x = Month, y = Value, group = `TrialArmN`)) +
+  geom_line(alpha=0.5) +  # Set linetype to full lines
+  geom_point(alpha=0.5)+ 
+  scale_x_continuous(name = "Months", breaks = seq(0, 24, 2)) +
+  scale_y_continuous(name = "ACL QOL", limits = c(0, 100)) +
+  theme_minimal() +
+  labs(color = "Trial arm") +
+  theme(
+    legend.position = "bottom",
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    plot.title = element_text(hjust = 0.5)
+  ) + ggtitle("Change in ACL QOL score over Time (Months) for All ACL Reconstructive Surgeries")
+
+plotACLQOLRecon
+
+# Convert the data from wide to long format
+long_dataACLQOLrehab <- ACL_QOL_%>% 
+  pivot_longer(cols = `0`:`60`, names_to = "Month", values_to = "Value") %>%
+  filter(!is.na(Value)) %>%
+  mutate(Month = as.numeric(Month)) %>% 
+  filter(TrialArmN == 9, Month <= 24)  # Corrected filter condition
+
+
+# Plotting the data for the first plot
+plotACLQOLRehab <- ggplot(long_dataACLQOLrehab, aes(x = Month, y = Value, group = `TrialArmN`)) +
+  geom_line(alpha=0.5) +  # Set linetype to full lines
+  geom_point(alpha=0.5)+ 
+  scale_x_continuous(name = "Months", breaks = seq(0, 24, 2)) +
+  scale_y_continuous(name = "ACL QOL", limits = c(0, 100)) +
+  theme_minimal() +
+  labs(color = "Trial arm") +
+  theme(
+    legend.position = "bottom",
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    plot.title = element_text(hjust = 0.5)
+  ) + ggtitle("Change in ACL QOL score over Time (Months) for All ACL non-operative")
+
+plotACLQOLRehab
+
+
+
+
+# Convert the data from wide to long format and perform initial filtering
+long_dataACLQOL <- ACL_QOL_ %>% 
+  pivot_longer(cols = `0`:`60`, names_to = "Month", values_to = "Value") %>%
+  filter(!is.na(Value)) %>%
+  mutate(
+    Month = as.numeric(Month),
+    Group = if_else(TrialArmN == 9, "Rehab", "Recon")
+  ) %>%
+  filter(Month <= 24)
+
+# Plot the combined data
+combined_ACLQOL_plot <- ggplot(long_dataACLQOL, aes(x = Month, y = Value, group = interaction(TrialArmN, Group), color = Group)) +
+  geom_line(alpha=0.5) +
+  geom_point(alpha=0.5) +
+  scale_x_continuous(name = "Months", breaks = seq(0, 24, 2)) +
+  scale_y_continuous(name = "ACL QOL", limits = c(0, 100)) +
+  theme_minimal() +
+  labs(color = "Group") +
+  theme(
+    legend.position = "bottom",
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    plot.title = element_text(hjust = 0.5)
+  ) + 
+  ggtitle("Change in ACL QOL Score Over Time for ACL Treatments")
+
+print(combined_ACLQOL_plot)
+
+
+
+
+########
+library(tidyverse)
+
+# Load the dataset
+# Assuming you have already loaded ACL_QOL_ data before running this script
+
+# Helper function to process data
+process_data_acl_qol <- function(data, condition, month_limit = 24) {
+  data %>%
+    pivot_longer(cols = `0`:`60`, names_to = "Month", values_to = "Value") %>%
+    filter(!is.na(Value)) %>%
+    mutate(Month = as.numeric(Month)) %>%
+    filter(TrialArmN == condition, Month <= month_limit)
+}
+
+# Data processing for different groups
+long_dataACLQOLRecon <- process_data_acl_qol(ACL_QOL_, condition = "!= 9") # For all except trial arm 9
+long_dataACLQOLRehab <- process_data_acl_qol(ACL_QOL_, condition = "== 9") # Only for trial arm 9
+
+# Combine data for plotting
+long_dataACLQOL <- ACL_QOL_ %>%
+  pivot_longer(cols = `0`:`60`, names_to = "Month", values_to = "Value") %>%
+  filter(!is.na(Value)) %>%
+  mutate(
+    Month = as.numeric(Month),
+    Group = if_else(TrialArmN == 9, "Rehabilitation", "Reconstruction")
+  ) %>%
+  filter(Month <= 24)
+
+# Plotting function
+create_plot_acl_qol <- function(data, title, x_breaks = seq(0, 24, 2), colors = c("Rehabilitation" = "red", "Reconstruction" = "blue")) {
+  ggplot(data, aes(x = Month, y = Value, group = interaction(TrialArmN, Group), color = Group)) +
+    geom_line(alpha=0.5) +
+    geom_point(alpha=0.5) +
+    scale_x_continuous(name = "Months", breaks = x_breaks) +
+    scale_y_continuous(name = "ACL QOL", limits = c(0, 100)) +
+    theme_minimal() +
+    labs(color = "Group") +
+    scale_color_manual(values = colors) +
+    theme(
+      legend.position = "bottom",
+      panel.grid.major.x = element_blank(),
+      panel.grid.minor.x = element_blank(),
+      plot.title = element_text(hjust = 0.5)
+    ) +
+    ggtitle(title)
+}
+
+# Generate plots
+plotACLQOLRecon <- create_plot_acl_qol(long_dataACLQOLRecon, "Change in ACL QOL score over Time (Months) for All ACL Reconstructive Surgeries")
+plotACLQOLRehab <- create_plot_acl_qol(long_dataACLQOLRehab, "Change in ACL QOL score over Time (Months) for All ACL Non-Operative")
+combined_ACLQOL_plot <- create_plot_acl_qol(long_dataACLQOL, "Change in ACL QOL Score Over Time for ACL Treatments")
+
+# Display plots
+print(plotACLQOLRecon)
+print(plotACLQOLRehab)
+print(combined_ACLQOL_plot)
+
+ggsave("combined_ACLQOL_plot.png", plot = combined_ACLQOL_plot, width = 10, height = 7.5, dpi = 96)
+
